@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ChefHat, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { login } from '../api/queries';
 import toast from 'react-hot-toast';
@@ -85,6 +85,10 @@ export default function LoginPage() {
               {loading ? <><Loader2 size={18} className="spin" /> Signing in...</> : 'Sign In'}
             </button>
           </form>
+
+          <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            Got an Activation Key? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create workspace</Link>
+          </p>
         </div>
       </div>
     </div>
