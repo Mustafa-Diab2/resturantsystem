@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, ClipboardList, Package,
   BarChart3, Settings, ChefHat, Grid3X3, Users,
-  LogOut, ChevronLeft, ChevronRight, Bell, Search,
+  LogOut, ChevronLeft, ChevronRight, Bell, Search, Menu
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { logout as apiLogout } from '../api/queries';
@@ -23,9 +23,13 @@ const NAV = [
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate  = useNavigate();
   const location  = useLocation();
   const { user, logout } = useAuthStore();
+
+  // close mobile menu instantly when a link is clicked
+  useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
 
   const handleLogout = async () => {
     try { await apiLogout(); } catch {}
@@ -36,8 +40,11 @@ export default function Layout() {
 
   return (
     <div className="layout">
+      {/* ── Mobile Overlay ── */}
+      <div className={`sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
+      
       {/* ── Sidebar ── */}
-      <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#FF6B35,#e85520)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <ChefHat size={20} color="#fff" />
@@ -85,8 +92,11 @@ export default function Layout() {
 
       {/* ── Main ── */}
       <div className={`main-content ${collapsed ? 'collapsed' : ''}`}>
-        <header className="topbar">
+        <header className="topbar glass">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button className="mobile-toggle" onClick={() => setMobileMenuOpen(true)}>
+              <Menu size={22} />
+            </button>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
               {NAV.find(n => n.path === location.pathname)?.label || 'ServeX'}
             </h2>
