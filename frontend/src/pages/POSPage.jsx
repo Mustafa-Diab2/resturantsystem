@@ -48,8 +48,6 @@ export default function POSPage() {
         user_id: user?.id,
         status: 'pending',
         total_price: total,
-        tax_amount: tax,
-        subtotal: subtotal,
         table_id: tableId || null,
         notes,
       });
@@ -61,7 +59,6 @@ export default function POSPage() {
           variant_id: item.variantId || null,
           quantity:   item.qty,
           unit_price: item.unitPrice,
-          subtotal:   item.unitPrice * item.qty,
         });
       }
       return orderId;
