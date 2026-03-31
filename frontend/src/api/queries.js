@@ -175,6 +175,13 @@ export const updateTableStatus = async (id, status) => {
 // ── Inventory / Reports (Bypass for now / Empty Arrays for speed) ──
 export const fetchIngredients = async () => ({ data: { data: { rows: [] } } });
 export const fetchLowStock    = async () => ({ data: { data: [] } });
+export const adjustStock      = async () => ({ data: {} });
+
+export const createTable = async (data) => {
+  const { error } = await supabase.from('tables').insert([data]);
+  if (error) throw error;
+  return { data: {} };
+};
 export const fetchDailyReport = async () => ({ data: { data: { total_revenue: 0, total_orders: 0, avg_order_value: 0 } } });
 export const fetchWeeklyReport= async () => ({ data: { data: [] } });
 export const fetchTopProducts = async () => ({ data: { data: [] } });
