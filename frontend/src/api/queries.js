@@ -16,7 +16,12 @@ export const login = async (data) => {
     .eq('id', authData.user.id)
     .single();
 
-  const userObj = { ...authData.user, ...profile, name: profile?.name || 'User' };
+  const userObj = { 
+    ...authData.user, 
+    ...profile, 
+    name: profile?.name || 'User',
+    role: profile?.roles?.name?.toLowerCase().replace(' ', '_')
+  };
   
   // Manually stick into store so app routes immediately
   useAuthStore.setState({ user: userObj, accessToken: authData.session.access_token });

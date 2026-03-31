@@ -44,8 +44,13 @@ export default function POSPage() {
       // 1. Create empty order
       const { data: orderRes } = await createOrder({
         type: orderType,
-        branch_id: user?.branch_id,
-        table_id: tableId || undefined,
+        branch_id: user?.branch_id || 1,
+        user_id: user?.id,
+        status: 'pending',
+        total_price: total,
+        tax_amount: tax,
+        subtotal: subtotal,
+        table_id: tableId || null,
         notes,
       });
       const orderId = orderRes.data.id;
@@ -53,8 +58,10 @@ export default function POSPage() {
       for (const item of items) {
         await addOrderItem(orderId, {
           product_id: item.productId,
-          variant_id: item.variantId || undefined,
+          variant_id: item.variantId || null,
           quantity:   item.qty,
+          unit_price: item.unitPrice,
+          subtotal:   item.unitPrice * item.qty,
         });
       }
       return orderId;
