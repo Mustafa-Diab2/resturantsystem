@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChefHat, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { login } from '../api/queries';
-import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const setAuth  = useAuthStore(s => s.setAuth);
 
-  const [form, setForm]       = useState({ email: 'admin@servex.io', password: 'Admin@123' });
+  const [form, setForm]         = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading]   = useState(false);
 
@@ -18,11 +16,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await login(form);
-      setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
+      // login natively updates the authStore in Supabase Auth now
       toast.success(`Welcome back, ${data.data.user.name}!`);
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      console.error(err);
+      toast.error(err.message || err.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -30,12 +29,10 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--dark)', padding: '1rem', position: 'relative', overflow: 'hidden' }}>
-      {/* Background blobs */}
       <div style={{ position: 'absolute', top: '-200px', left: '-200px', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,107,53,0.12), transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-200px', right: '-200px', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,194,168,0.1), transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: 440, animation: 'slideUp 0.4s ease' }}>
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <div style={{ width: 72, height: 72, borderRadius: 20, background: 'linear-gradient(135deg,#FF6B35,#e85520)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', boxShadow: '0 8px 30px rgba(255,107,53,0.35)' }}>
             <ChefHat size={36} color="#fff" />
@@ -46,7 +43,6 @@ export default function LoginPage() {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Restaurant Management System</p>
         </div>
 
-        {/* Card */}
         <div className="card" style={{ padding: '2rem' }}>
           <h2 style={{ fontSize: '1.3rem', marginBottom: '0.25rem' }}>Welcome back</h2>
           <p style={{ fontSize: '0.875rem', marginBottom: '1.75rem', color: 'var(--text-muted)' }}>Sign in to your account</p>
@@ -89,16 +85,7 @@ export default function LoginPage() {
               {loading ? <><Loader2 size={18} className="spin" /> Signing in...</> : 'Sign In'}
             </button>
           </form>
-
-          {/* Demo hint */}
-          <div style={{ marginTop: '1.5rem', padding: '0.85rem', background: 'var(--dark-3)', borderRadius: 'var(--radius)', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-            Demo: <strong style={{ color: 'var(--text-secondary)' }}>admin@servex.io</strong> / <strong style={{ color: 'var(--text-secondary)' }}>Admin@123</strong>
-          </div>
         </div>
-
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          © 2025 ServeX. All rights reserved.
-        </p>
       </div>
     </div>
   );
