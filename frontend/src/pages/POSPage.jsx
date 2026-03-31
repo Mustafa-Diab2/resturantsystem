@@ -51,7 +51,7 @@ export default function POSPage() {
         table_id: tableId || null,
         notes,
       });
-      const orderId = orderRes.data.id;
+      const orderId = orderRes.id;
       // 2. Add all items
       for (const item of items) {
         await addOrderItem(orderId, {
