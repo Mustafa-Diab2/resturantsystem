@@ -1,15 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchBranches, fetchUsers } from '../api/queries';
+import { fetchBranches, fetchUsers, fetchTenants } from '../api/queries';
 import useAuthStore from '../store/authStore';
-import { Building2, Users, ShieldAlert } from 'lucide-react';
+import { Building2, Users, ShieldAlert, Globe } from 'lucide-react';
 
 export default function SettingsPage() {
   const user = useAuthStore(s => s.user);
+  
+  // God-Mode Verification: Is it Mustafa (Tenant 1 or hardcoded email)?
+  const isPlatformAdmin = user?.tenant_id === 1 || user?.email === 'mustafadiab2942000@gmail.com';
 
-  const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches, select: d => d.data.data, enabled: user?.role === 'super_admin' });
+  const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches, select: d => d.data.data, enabled: user?.role === 'super_admin' || isPlatformAdmin });
   const { data: usersRes } = useQuery({ queryKey: ['users'], queryFn: fetchUsers, select: d => d.data.data });
+  const { data: tenantsRes } = useQuery({ queryKey: ['tenants'], queryFn: fetchTenants, select: d => d.data.data, enabled: !!isPlatformAdmin });
 
-  if (user?.role !== 'super_admin' && user?.role !== 'admin') {
+  if (user?.role !== 'super_admin' && user?.role !== 'admin' && !isPlatformAdmin) {
     return (
       <div className="empty-state">
         <ShieldAlert size={64} style={{ color: 'var(--danger)', opacity: 0.5 }} />
@@ -21,8 +25,47 @@ export default function SettingsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <h1>System Settings</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>System Settings</h1>
+        {isPlatformAdmin && <div className="badge badge-warning" style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>👑 God-Mode Active</div>}
+      </div>
 
+      {/* SaaS CONTROL PANEL (ONLY VISIBLE TO PLATFORM OWNER) */}
+      {isPlatformAdmin && (
+        <div className="card" style={{ borderColor: 'var(--warning)', boxShadow: '0 4px 20px rgba(245,158,11,0.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <Globe size={24} color="var(--warning)" />
+            <h3 style={{ margin: 0, color: 'var(--warning)' }}>SaaS Control Panel (Clients)</h3>
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            You are the platform owner. Below are all the restaurants that have subscribed to your software using your Activation Key.
+          </p>
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead><tr><th>Workspace ID</th><th>Restaurant Name</th><th>Domain</th><th>Subscription</th><th>Joined Date</th></tr></thead>
+              <tbody>
+                {(tenantsRes || []).map(t => (
+                  <tr key={t.id}>
+                    <td>#{t.id}</td>
+                    <td style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{t.name}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{t.domain || `servex.io/t/${t.id}`}</td>
+                    <td>
+                      <span className={`badge ${t.subscription_status === 'active' ? 'badge-success' : 'badge-danger'}`}>
+                        {t.subscription_status?.toUpperCase() || 'ACTIVE'}
+                      </span>
+                    </td>
+                    <td>{new Date(t.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+                {!tenantsRes && <tr><td colSpan={5} style={{textAlign:'center', color: 'var(--text-muted)'}}>Loading clients data...</td></tr>}
+                {tenantsRes?.length === 0 && <tr><td colSpan={5} style={{textAlign:'center', color: 'var(--text-muted)'}}>No clients registered yet. Start selling your activation key!</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* RESTAURANT INTERNAL SETTINGS */}
       {user?.role === 'super_admin' && (
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>

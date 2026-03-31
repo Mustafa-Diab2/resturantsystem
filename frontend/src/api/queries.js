@@ -267,3 +267,9 @@ export const fetchUsers = async () => {
   const mapped = data.map(u => ({ ...u, role_name: u.roles?.name, branch_name: u.branches?.name }));
   return { data: { data: { rows: mapped } } };
 };
+
+export const fetchTenants = async () => {
+  const { data, error } = await supabase.from('tenants').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return { data: { data } };
+};
