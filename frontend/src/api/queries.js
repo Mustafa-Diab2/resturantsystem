@@ -172,25 +172,93 @@ export const updateTableStatus = async (id, status) => {
   return { data };
 };
 
-// ── Inventory / Reports (Bypass for now / Empty Arrays for speed) ──
-export const fetchIngredients = async () => ({ data: { data: { rows: [] } } });
-export const fetchLowStock    = async () => ({ data: { data: [] } });
-export const adjustStock      = async () => ({ data: {} });
+export const fetchIngredients = async () => {
+  const { data, error } = await supabase.from('ingredients').select('*').order('name');
+  if (error) throw error;
+  return { data: { data: { rows: data } } };
+};
+
+export const fetchLowStock = async () => {
+  const { data, error } = await supabase.from('ingredients').select('*');
+  if (error) throw error;
+  return { data: { data: data.filter(i => Number(i.stock_quantity) <= Number(i.min_stock)) } };
+};
+
+export const adjustStock = async (payload) => {
+  const { data: ing } = await supabase.from('ingredients').select('stock_quantity').eq('id', payload.id).single();
+  const newQty = Number(ing?.stock_quantity || 0) + Number(payload.delta);
+  const { error } = await supabase.from('ingredients').update({ stock_quantity: newQty }).eq('id', payload.id);
+  if (error) throw error;
+  return { data: {} };
+};
 
 export const createTable = async (data) => {
   const { error } = await supabase.from('tables').insert([data]);
   if (error) throw error;
   return { data: {} };
 };
-export const fetchDailyReport = async () => ({ data: { data: { total_revenue: 0, total_orders: 0, avg_order_value: 0 } } });
-export const fetchWeeklyReport= async () => ({ data: { data: [] } });
-export const fetchTopProducts = async () => ({ data: { data: [] } });
-export const fetchHourlyReport= async () => ({ data: { data: [] } });
 
-// ── Branches/Users ───────────────────────────────────────────
+export const fetchDailyReport = async (params) => {
+  const start = new Date(); start.setHours(0,0,0,0);
+  let q = supabase.from('orders').select('total_price, type').gte('created_at', start.toISOString()).neq('status', 'cancelled');
+  if (params?.branch_id) q = q.eq('branch_id', params.branch_id);
+  const { data, error } = await q;
+  if (error) throw error;
+  
+  let rev = 0, dine = 0, tk = 0, del = 0;
+  data.forEach(o => {
+    rev += Number(o.total_price);
+    if(o.type === 'dine_in') dine++;
+    if(o.type === 'takeaway') tk++;
+    if(o.type === 'delivery') del++;
+  });
+  return { data: { data: { total_revenue: rev, total_orders: data.length, avg_order_value: data.length ? (rev / data.length) : 0, dine_in_count: dine, takeaway_count: tk, delivery_count: del } } };
+};
+
+export const fetchWeeklyReport = async (params) => {
+  const start = new Date(); start.setDate(start.getDate() - 7);
+  let q = supabase.from('orders').select('total_price, created_at').gte('created_at', start.toISOString()).neq('status', 'cancelled');
+  if (params?.branch_id) q = q.eq('branch_id', params.branch_id);
+  const { data, error } = await q;
+  if (error) throw error;
+  const days = {};
+  for(let i=6; i>=0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days[d.toISOString().split('T')[0]] = 0; }
+  data.forEach(o => { const date = o.created_at.split('T')[0]; if(days[date] !== undefined) days[date] += Number(o.total_price); });
+  return { data: { data: Object.keys(days).map(date => ({ date, revenue: days[date] })) } };
+};
+
+export const fetchTopProducts = async () => {
+  const { data, error } = await supabase.from('order_items').select('quantity, products(name)');
+  if (error) throw error;
+  const map = {};
+  data.forEach(i => { const n = i.products?.name; if(n){ map[n] = (map[n]||0) + i.quantity; } });
+  return { data: { data: Object.keys(map).map(name => ({ name, total_qty: map[name] })).sort((a,b)=>b.total_qty - a.total_qty) } };
+};
+
+export const fetchHourlyReport = async (params) => {
+  const start = new Date(); start.setHours(0,0,0,0);
+  let q = supabase.from('orders').select('total_price, created_at').gte('created_at', start.toISOString()).neq('status', 'cancelled');
+  if (params?.branch_id) q = q.eq('branch_id', params.branch_id);
+  const { data, error } = await q;
+  if (error) throw error;
+  const hMap = {};
+  data.forEach(o => {
+    const h = new Date(o.created_at).getHours();
+    if(!hMap[h]) hMap[h] = { revenue: 0, orders: 0 };
+    hMap[h].revenue += Number(o.total_price); hMap[h].orders += 1;
+  });
+  return { data: { data: Object.keys(hMap).map(h => ({ hour: h, revenue: hMap[h].revenue, orders: hMap[h].orders })).sort((a,b)=>a.hour-b.hour) } };
+};
+
 export const fetchBranches = async () => {
   const { data, error } = await supabase.from('branches').select('*');
   if (error) throw error;
   return { data: { data } };
 };
-export const fetchUsers = async () => ({ data: { data: { rows: [] } } });
+
+export const fetchUsers = async () => {
+  const { data, error } = await supabase.from('profiles').select('*, roles(name), branches(name)');
+  if (error) throw error;
+  const mapped = data.map(u => ({ ...u, role_name: u.roles?.name, branch_name: u.branches?.name }));
+  return { data: { data: { rows: mapped } } };
+};
