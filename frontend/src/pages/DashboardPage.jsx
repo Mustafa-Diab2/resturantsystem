@@ -4,7 +4,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { ShoppingBag, DollarSign, TrendingUp, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ShoppingBag, DollarSign, TrendingUp, Clock, ArrowUpRight, ArrowDownRight, BrainCircuit } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 const COLORS = ['#FF6B35','#00C2A8','#3b82f6','#f59e0b','#22c55e','#a855f7'];
@@ -63,6 +63,21 @@ export default function DashboardPage() {
         <div className="badge badge-accent" style={{ fontSize: '0.8rem', padding: '0.4rem 0.9rem' }}>
           Live Dashboard
           <span className="notif-dot" style={{ marginLeft: 4 }} />
+        </div>
+      </div>
+
+      {/* 🤖 AI Insights Card */}
+      <div className="card glass glow-accent" style={{ display: 'flex', gap: '1rem', alignItems: 'center', borderColor: 'rgba(0,194,168,0.5)', background: 'linear-gradient(90deg, var(--card) 0%, rgba(0,194,168,0.05) 100%)' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(0,194,168,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <BrainCircuit color="var(--accent)" size={24} className="pulse" />
+        </div>
+        <div>
+          <h3 style={{ fontSize: '1rem', color: 'var(--accent)', marginBottom: '0.25rem' }}>ServeX AI Assistant (Beta)</h3>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+            {topProds?.length > 0 
+              ? `🔥 AI Insight: "${topProds[0].name}" is your best seller. We recommend pairing it with a combo deal to boost revenue by 15% today!` 
+              : `💡 Start logging orders via POS or QR Menu to train the predictive AI model.`}
+          </p>
         </div>
       </div>
 
