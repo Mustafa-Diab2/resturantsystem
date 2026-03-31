@@ -11,6 +11,7 @@ import ProductsPage   from './pages/ProductsPage';
 import TablesPage     from './pages/TablesPage';
 import SettingsPage   from './pages/SettingsPage';
 import KitchenPage    from './pages/KitchenPage';
+import CustomerMenuPage from './pages/CustomerMenuPage';
 
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore(s => s.accessToken);
@@ -22,6 +23,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/menu/:tableId" element={<CustomerMenuPage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard"  element={<DashboardPage />} />
